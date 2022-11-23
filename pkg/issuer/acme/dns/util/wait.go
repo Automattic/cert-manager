@@ -21,7 +21,7 @@ import (
 )
 
 type preCheckDNSFunc func(fqdn, value string, nameservers []string,
-	useAuthoritative bool) (bool, error)
+	useAuthoritative bool, followCname bool) (bool, error)
 type dnsQueryFunc func(fqdn string, rtype uint16, nameservers []string, recursive bool) (in *dns.Msg, err error)
 
 var (
@@ -102,12 +102,15 @@ func followCNAMEs(fqdn string, nameservers []string, fqdnChain ...string) (strin
 
 // checkDNSPropagation checks if the expected TXT record has been propagated to all authoritative nameservers.
 func checkDNSPropagation(fqdn, value string, nameservers []string,
-	useAuthoritative bool) (bool, error) {
+	useAuthoritative bool, followCNAME bool) (bool, error) {
 
 	var err error
-	fqdn, err = followCNAMEs(fqdn, nameservers)
-	if err != nil {
-		return false, err
+	// Check if the domain has CNAME then return that
+	if followCNAME {
+		fqdn, err = followCNAMEs(fqdn, nameservers)
+		if err != nil {
+			return false, err
+		}
 	}
 
 	if !useAuthoritative {

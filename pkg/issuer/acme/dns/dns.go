@@ -115,8 +115,13 @@ func (s *Solver) Check(ctx context.Context, issuer v1.GenericIssuer, ch *cmacme.
 
 	log.V(logf.DebugLevel).Info("checking DNS propagation", "nameservers", s.Context.DNS01Nameservers)
 
+	providerConfig, err := extractChallengeSolverConfig(ch)
+	if err != nil {
+		return err
+	}
+
 	ok, err := util.PreCheckDNS(fqdn, ch.Spec.Key, s.Context.DNS01Nameservers,
-		s.Context.DNS01CheckAuthoritative)
+		s.Context.DNS01CheckAuthoritative, followCNAME(providerConfig.CNAMEStrategy))
 	if err != nil {
 		return err
 	}
